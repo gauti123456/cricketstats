@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Cricket Player Stats App</title>
+    <link
+      rel="stylesheet"
+      href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
+    />
+    <link
+      href="https://code.jquery.com/ui/1.10.4/themes/ui-lightness/jquery-ui.css"
+      rel="stylesheet"
+    />
+    <script src="https://code.jquery.com/jquery-1.10.2.js"></script>
+    <script src="https://code.jquery.com/ui/1.10.4/jquery-ui.js"></script>
+    <script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
+
+  </head>
+  <style>
+    .ui-autocomplete {
+      max-height: 300px;
+      overflow-y: auto;
+      /* prevent horizontal scrollbar */
+      overflow-x: hidden;
+    }
+  </style>
+  <body>
+    <div class="container">
+      <form id="form">
+        <div class="form-group">
+          <label for="player">Player Name</label>
+          <input
+            class="form-control"
+            id="playername"
+            placeholder="Enter Player Name"
+            required
+          />
+        </div>
+        <div class="form-group">
+          <button class="btn btn-danger btn-block">Get Player Info</button>
+        </div>
+      </form>
+      <div id="result"></div>
+    </div>
+  </body>
+  <script>
+    var playerNames = [];
+    var result;
+    var inputplayer;
+    $("#playername").on("keyup", function () {
+      inputplayer = $(this).val();
+      $.ajax({
+        method: "POST",
+        url: "/getplayernames",
+        data: { input: $(this).val() },
+        success: function (data) {
+          //console.log(data.names)
+          playerNames = data.names;
+          let match = playerNames.filter((name) => {
+            const regex = new RegExp(`^${inputplayer}`, "gi");
+            return name.match(regex);
+          });
+
+          if (inputplayer.length === 0) {
+            playerNames = [];
+          }
+
+          $("#playername").autocomplete({
+            source: match,
+          });
+        },
+      });
+    });
+
+    $("#playername").on("change", function () {
+      inputplayer = $(this).val();
+    });
+
+    $("#form").submit(function (e) {
+      e.preventDefault();
+
+      $("#button").text("Fetching Player Stats")
+
+      $("#button").prop("disabled","true")
+
+      $("#result").empty()
+
+      $.ajax({
+        method: "POST",
+        url: "/getplayerinfo",
+        data: { playername: inputplayer },
+        success: function (data) {
+          console.log(data.info);
+          
+          if(data.info == "Player not found")
+          {
+            $("#playername").val("")
+          $("#button").removeAttr("disabled");  
+          $("#button").text("Get Player Info")
+            swal("Error", "Player Name Doesn't Found", "error");
+          }else{
+
+          $("#playername").val("")
+          $("#button").removeAttr("disabled"); 
+          $("#button").text("Get Player Info")
+
+          result = `
+                        
+                        <table class="table table-striped">
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Date of Birth (Age)</th>
+        <th>Birth Place</th>
+        <th>Country</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>${data.info.name}</td>
+        <td>${data.info.dateOfBirth}</td>
+        <td>${data.info.birthPlace}</td>
+        <td>${data.info.country}</td>
+      </tr>
+    </tbody>
+    </table>
+
+    <table class="table table-striped">
+    <thead>
+      <tr>
+        <th>Test Debut</th>
+        <th>ODI Debut</th>
+        <th>T20I Debut</th>
+        <th>IPL Debut</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>${data.info.testDebut}</td>
+        <td>${data.info.odiDebut}</td>
+        <td>${data.info.t20iDebut}</td>
+        <td>${data.info.iplDebut}</td>
+      </tr>
+    </tbody>
+    </table>
+
+    <table class="table table-striped">
+    <thead>
+      <tr>
+        <th>Last Test</th>
+        <th>Last ODI</th>
+        <th>Last T20I</th>
+        <th>Last IPL Match</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>${data.info.lastTest}</td>
+        <td>${data.info.lastOdi}</td>
+        <td>${data.info.lastT20i}</td>
+        <td>${data.info.lastIpl}</td>
+      </tr>
+    </tbody>
+    </table>
+    <br>
+
+
+
+    <h4 class="text-center">Batting Statistics</h4>
+
+    <br>
+
+    <table class="table table-striped">
+    <thead>
+      <tr>
+        <th>No of Test Matches</th>
+        <th>Test Runs</th>
+        <th>Average</th>
+        <th>Strike Rate</th>
+        <th>No of 50's</th>
+        <th>No of 100's</th>
+        <th>High Score</th>
+        <th>No of Fours</th>
+        <th>No of Sixes</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>${data.info.batting_test_matches}</td>
+        <td>${data.info.batting_test_runs}</td>
+        <td>${data.info.batting_test_average}</td>
+        <td>${data.info.batting_test_strikeRate}</td>
+        <td>${data.info.batting_test_fifties}</td>
+        <td>${data.info.batting_test_hundreds}</td>
+        <td>${data.info.batting_test_highScore}</td>
+        <td>${data.info.batting_test_fours}</td>
+        <td>${data.info.batting_test_sixes}</td>
+      </tr>
+    </tbody>
+    </table>
+    
+    
+    <table class="table table-striped">
+    <thead>
+      <tr>
+        <th>No of ODI Matches</th>
+        <th>ODI Runs</th>
+        <th>Average</th>
+        <th>Strike Rate</th>
+        <th>No of 50's</th>
+        <th>No of 100's</th>
+        <th>High Score</th>
+        <th>No of Fours</th>
+        <th>No of Sixes</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>${data.info.batting_odi_matches}</td>
+        <td>${data.info.batting_odi_runs}</td>
+        <td>${data.info.batting_odi_average}</td>
+        <td>${data.info.batting_odi_strikeRate}</td>
+        <td>${data.info.batting_odi_fifties}</td>
+        <td>${data.info.batting_odi_hundreds}</td>
+        <td>${data.info.batting_odi_highScore}</td>
+        <td>${data.info.batting_odi_fours}</td>
+        <td>${data.info.batting_odi_sixes}</td>
+      </tr>
+    </tbody>
+    </table>
+
+    <table class="table table-striped">
+    <thead>
+      <tr>
+        <th>No of T20I Matches</th>
+        <th>T20I Runs</th>
+        <th>Average</th>
+        <th>Strike Rate</th>
+        <th>No of 50's</th>
+        <th>No of 100's</th>
+        <th>High Score</th>
+        <th>No of Fours</th>
+        <th>No of Sixes</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>${data.info.batting_t20i_matches}</td>
+        <td>${data.info.batting_t20i_runs}</td>
+        <td>${data.info.batting_t20i_average}</td>
+        <td>${data.info.batting_t20i_strikeRate}</td>
+        <td>${data.info.batting_t20i_fifties}</td>
+        <td>${data.info.batting_t20i_hundreds}</td>
+        <td>${data.info.batting_t20i_highScore}</td>
+        <td>${data.info.batting_t20i_fours}</td>
+        <td>${data.info.batting_t20i_sixes}</td>
+      </tr>
+    </tbody>
+    </table>
+
+    <table class="table table-striped">
+    <thead>
+      <tr>
+        <th>No of IPL Matches</th>
+        <th>IPL Runs</th>
+        <th>Average</th>
+        <th>Strike Rate</th>
+        <th>No of 50's</th>
+        <th>No of 100's</th>
+        <th>High Score</th>
+        <th>No of Fours</th>
+        <th>No of Sixes</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>${data.info.batting_ipl_matches}</td>
+        <td>${data.info.batting_ipl_runs}</td>
+        <td>${data.info.batting_ipl_average}</td>
+        <td>${data.info.batting_ipl_strikeRate}</td>
+        <td>${data.info.batting_ipl_fifties}</td>
+        <td>${data.info.batting_ipl_hundreds}</td>
+        <td>${data.info.batting_ipl_highScore}</td>
+        <td>${data.info.batting_ipl_fours}</td>
+        <td>${data.info.batting_ipl_sixes}</td>
+      </tr>
+    </tbody>
+    </table>
+
+    <br>
+
+    <h4 class="text-center">Bowling Statistics</h4>
+
+    <br>
+
+    <table class="table table-striped">
+    <thead>
+      <tr>
+        <th>No of Test Matches</th>
+        <th>Test Wickets</th>
+        <th>Average</th>
+        <th>Strike Rate</th>
+        <th>Economy</th>
+        <th>No of 5 Wickets Hauls</th>
+        <th>Best Performance</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>${data.info.batting_test_matches}</td>
+        <td>${data.info.bowling_test_bestBowlinginInnings}</td>
+        <td>${data.info.bowling_test_strikeRate}</td>
+        <td>${data.info.bowling_test_fiveWickets}</td>
+        <td>${data.info.bowling_test_average}</td>
+        <td>${data.info.bowling_test_tenWickets}</td>
+        <td>${data.info.bowling_test_bestBowlinginMatch}</td>
+      </tr>
+    </tbody>
+    </table>
+    
+    
+    <table class="table table-striped">
+    <thead>
+      <tr>
+        <th>No of ODI Matches</th>
+        <th>ODI Wickets</th>
+        <th>Average</th>
+        <th>Strike Rate</th>
+        <th>Economy</th>
+        <th>No of 5 Wickets Hauls</th>
+        <th>Best Performance</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>${data.info.batting_odi_matches}</td>
+        <td>${data.info.bowling_odi_bestBowlinginInnings}</td>
+        <td>${data.info.bowling_odi_strikeRate}</td>
+        <td>${data.info.bowling_odi_fiveWickets}</td>
+        <td>${data.info.bowling_odi_average}</td>
+        <td>${data.info.bowling_odi_tenWickets}</td>
+        <td>${data.info.bowling_odi_bestBowlinginMatch}</td>
+      </tr>
+    </tbody>
+    </table>
+
+    <table class="table table-striped">
+    <thead>
+      <tr>
+        <th>No of T20I Matches</th>
+        <th>T20I Wickets</th>
+        <th>Average</th>
+        <th>Strike Rate</th>
+        <th>Economy</th>
+        <th>No of 5 Wickets Hauls</th>
+        <th>Best Performance</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>${data.info.batting_t20i_matches}</td>
+        <td>${data.info.bowling_t20i_bestBowlinginInnings}</td>
+        <td>${data.info.bowling_t20i_strikeRate}</td>
+        <td>${data.info.bowling_t20i_fiveWickets}</td>
+        <td>${data.info.bowling_t20i_average}</td>
+        <td>${data.info.bowling_t20i_tenWickets}</td>
+        <td>${data.info.bowling_t20i_bestBowlinginMatch}</td>
+      </tr>
+    </tbody>
+    </table>
+
+    <table class="table table-striped">
+    <thead>
+      <tr>
+        <th>No of IPL Matches</th>
+        <th>IPL Wickets</th>
+        <th>Average</th>
+        <th>Strike Rate</th>
+        <th>Economy</th>
+        <th>No of 5 Wickets Hauls</th>
+        <th>Best Performance</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>${data.info.batting_ipl_matches}</td>
+        <td>${data.info.bowling_ipl_bestBowlinginInnings}</td>
+        <td>${data.info.bowling_ipl_strikeRate}</td>
+        <td>${data.info.bowling_ipl_fiveWickets}</td>
+        <td>${data.info.bowling_ipl_average}</td>
+        <td>${data.info.bowling_ipl_tenWickets}</td>
+        <td>${data.info.bowling_ipl_bestBowlinginMatch}</td>
+      </tr>
+    </tbody>
+    </table>
+
+
+
+                        `;
+          $("#result").append(result)
+  }
+        },
+      });
+    });
+  </script>
+</html>
